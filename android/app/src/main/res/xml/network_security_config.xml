@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+
+    <!-- Allow HTTPS + HTTP for your API -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">
+            kit-distribution-api-production.up.railway.app
+        </domain>
+    </domain-config>
+
+    <!-- Default allow -->
+    <base-config cleartextTrafficPermitted="true" />
+
+</network-security-config>
