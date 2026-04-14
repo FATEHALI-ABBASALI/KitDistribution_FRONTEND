@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Kit Distribution</string>
-    <string name="title_activity_main">Kit Distribution</string>
-    <string name="package_name">com.kitdistribution.app</string>
-    <string name="custom_url_scheme">com.kitdistribution.app</string>
-</resources>

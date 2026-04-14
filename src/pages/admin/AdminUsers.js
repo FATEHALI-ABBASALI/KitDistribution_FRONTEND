@@ -372,6 +372,22 @@ function DataRow({ cells, onEdit, onDelete, onReset }) {
       ))}
       <td className="row-actions">
         <button className="edit-btn" onClick={onEdit}>Edit</button>
+        <button
+  className="view-btn"
+  onClick={() =>
+window.open(`http://localhost:8080/api/admin/view-card/${"Card_" + cells[0] + ".png"}`)  }
+>
+  👁 View
+</button>
+
+<button
+  className="download-btn"
+  onClick={() =>
+    window.open(`http://localhost:8080/api/admin/download-card/${"Card_" + cells[0] + ".png"}`)
+  }
+>
+  ⬇ Download
+</button>
         <button className="delete-btn" onClick={onDelete}>Delete</button>
         <button className="reset-btn-small" onClick={onReset}>
           Reset Password
