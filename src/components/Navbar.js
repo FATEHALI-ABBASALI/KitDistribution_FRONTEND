@@ -66,6 +66,22 @@ export default function Navbar() {
                     Reports
                   </NavLink>
                 </li>
+                <li className="nav-item">
+                <NavLink
+                  to="/admin/inventory"
+                  className={({ isActive }) =>
+                    isActive ? "nav-link active" : "nav-link"
+                  }
+                >
+                  Inventory
+                </NavLink>
+              </li>
+            <li className="nav-item">
+            <NavLink to="/admin/centers" className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"}>
+              Centers
+            </NavLink>
+            </li>
               </>
             )}
 

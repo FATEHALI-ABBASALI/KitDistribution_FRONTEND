@@ -17,16 +17,33 @@ import {
 } from "recharts";
 
 export default function AdminDashboard() {
-
+  
+  const [monthlyData, setMonthlyData] = useState([]);
   const [stats, setStats] = useState({});
   const [years, setYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState("");
+  const [page, setPage] = useState("dashboard");
 
   useEffect(() => {
     loadStats();
     loadYears();
-  }, []);
+    loadMonthlyChart(); // 👈 ADD THIS
 
+  }, []);
+  const loadMonthlyChart = async () => {
+    try {
+      const data = await apiRequest("/api/admin/monthly-chart");
+      setMonthlyData(data);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load monthly chart");
+    }
+  };
+  const monthlyChartData = monthlyData.map(x => ({
+    name: "Month " + x.month,
+    value: x.count
+  }));
+   
   // ================= LOAD STATS =================
   const loadStats = async () => {
     try {
@@ -106,10 +123,14 @@ export default function AdminDashboard() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
-
-        <h1 className="admin-title">Admin Dashboard</h1>
-
+       
+        
+      
         {/* YEAR DROPDOWN */}
+       
+        {page === "dashboard" && (
+        <>
+        
         <div style={{ marginBottom: "20px" }}>
           <label style={{ marginRight: "10px", fontWeight: "bold" }}>
             Select Year:
@@ -131,7 +152,8 @@ export default function AdminDashboard() {
             ))}
           </select>
         </div>
-
+        </>
+            )}
         {/* STATS */}
         <div className="stats-gradient-grid">
 
@@ -141,7 +163,7 @@ export default function AdminDashboard() {
           <GradientStat title="Pending Kits" value={stats.pending} color="grad-pink" />
 
         </div>
-
+            
         {/* CHARTS */}
         <div className="charts-grid">
 
@@ -172,7 +194,18 @@ export default function AdminDashboard() {
               </PieChart>
             </ResponsiveContainer>
           </div>
+                   <div className="chart-card">
+                    <h3>Monthly Distribution</h3>
 
+                    <ResponsiveContainer width="100%" height={260}>
+                      <BarChart data={monthlyChartData}>
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="value" fill="#22c55e" radius={[10,10,0,0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
         </div>
 
       </motion.div>
@@ -188,3 +221,12 @@ function GradientStat({ title, value, color }) {
     </motion.div>
   );
 }
+const btnStyle = {
+  marginRight: "10px",
+  padding: "8px 16px",
+  border: "none",
+  borderRadius: "6px",
+  background: "#6366f1",
+  color: "#fff",
+  cursor: "pointer"
+};

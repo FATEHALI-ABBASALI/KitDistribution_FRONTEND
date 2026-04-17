@@ -119,8 +119,45 @@ export default function AdminReports() {
           >
             Terminal-wise Report
           </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.05 }}
+            className="primary-btn"
+            onClick={() => navigate("/admin/month-report")}
+          >
+            📅 Month-wise Report
+          </motion.button>
+          
         </div>
+        <motion.button
+        whileTap={{ scale: 0.95 }}
+        whileHover={{ scale: 1.05 }}
+        className="primary-btn"
+        style={{ marginRight: "10px", marginBottom: "10px" }} // 🔥 ADD
+        onClick={() => navigate("/admin/low-stock-report")}
+      >
+        ⚠️ Low Stock Report
+      </motion.button>
+      
+      <motion.button
+        whileTap={{ scale: 0.95 }}
+        whileHover={{ scale: 1.05 }}
+        className="primary-btn"
+        style={{ marginRight: "10px", marginBottom: "10px" }} // 🔥 ADD
 
+        onClick={() => navigate("/admin/center-report")}
+      >
+        🏢 Center-wise Report
+      </motion.button>
+
+            <motion.button
+        whileTap={{ scale: 0.95 }}
+        whileHover={{ scale: 1.05 }}
+        className="primary-btn"
+        onClick={() => navigate("/admin/beneficiary-report")}
+      >
+        👤 Beneficiary Report
+      </motion.button>
         {/* ===== Summary Cards ===== */}
         <div className="reports-cards">
           <SummaryCard

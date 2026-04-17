@@ -8,6 +8,12 @@ import Login from "./pages/Login";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminReports from "./pages/admin/AdminReports";
+import Inventory from "./pages/admin/Inventory";
+import Center from "./pages/admin/Center";
+import MonthReport from "./pages/admin/MonthReport";
+import CenterReport from "./pages/admin/CenterReport";
+import LowStockReport from "./pages/admin/LowStockReport";
+import BeneficiaryReport from "./pages/admin/BeneficiaryReport";
 
 // ✅ NEW: Annual & Terminal Reports
 import AdminAnnualReports from "./pages/admin/AdminAnnualReports";
@@ -15,6 +21,8 @@ import AdminTerminalReports from "./pages/admin/AdminTerminalReports";
 
 // Terminal
 import TerminalDashboard from "./pages/terminal/TerminalDashboard";
+import ManagerLogin from "./pages/manager/ManagerLogin";
+import ManagerDashboard from "./pages/manager/ManagerDashboard";
 
 // Beneficiary
 import BeneficiaryDashboard from "./pages/beneficiary/BeneficiaryDashboard";
@@ -53,7 +61,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-
+       
         {/* ⭐ FIRST SCREEN */}
         <Route
           path="/"
@@ -92,7 +100,23 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+            <Route
+            path="/admin/inventory"
+            element={
+              <ProtectedRoute role="Admin">
+                <Inventory />
+              </ProtectedRoute>
+            }
+           />
 
+          <Route
+            path="/admin/centers"
+            element={
+              <ProtectedRoute role="Admin">
+                <Center />
+              </ProtectedRoute>
+            }
+          />
         {/* ✅ NEW: Annual Report */}
         <Route
           path="/admin/reports-annual"
@@ -102,7 +126,12 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-
+        <Route path="/admin/month-report" element={<MonthReport />} />
+        <Route path="/admin/center-report" element={<CenterReport />} />
+        <Route path="/admin/low-stock-report" element={<LowStockReport />} />
+        <Route path="/admin/beneficiary-report" element={<BeneficiaryReport />} />
+        <Route path="/manager-login" element={<ManagerLogin />} />
+        <Route path="/manager" element={<ManagerDashboard />} />
         {/* ✅ NEW: Terminal-wise Report */}
         <Route
           path="/admin/reports-terminal"

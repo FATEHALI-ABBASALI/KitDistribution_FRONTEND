@@ -11,7 +11,7 @@ export default function AdminUsers() {
   const [modal, setModal] = useState(null);
   const [editData, setEditData] = useState(null);
   const [deleteInfo, setDeleteInfo] = useState(null);
-
+  const [centers, setCenters] = useState([]);
   /* ================= LOAD USERS ================= */
   const loadUsers = async () => {
     try {
@@ -24,6 +24,7 @@ export default function AdminUsers() {
 
   useEffect(() => {
     loadUsers();
+    apiRequest("/api/centers").then(setCenters);
 
     const handleYearChange = () => loadUsers();
     window.addEventListener("yearChanged", handleYearChange);
@@ -75,7 +76,7 @@ export default function AdminUsers() {
       // 🔵 ADD TERMINAL
       if (modal === "terminal-add") {
         const res = await apiRequest(
-          "/api/admin/terminal-user?fullName=" + data.fullName,
+         `/api/admin/terminal-user?fullName=${data.fullName}&centerId=${data.centerId}`,
           "POST"
         );
         alert("Password: " + res.password);
@@ -100,7 +101,10 @@ if (modal === "terminal-edit") {
   await apiRequest(
     `/api/admin/terminal-user/${editData.terminal_ID}`,
     "PUT",
-    data.fullName   // ✅ ONLY STRING
+    {
+  fullName: data.fullName,
+  centerId: data.centerId
+}
   );
   alert("Terminal updated");
 }
@@ -155,19 +159,22 @@ const exportData = () => {
 
 
     /* ---------- TERMINALS FILE ---------- */
-    const tHeaders = [
-      "ID",
-      "Name",
-      "Status",
-      "Create Date",
-      "Year"
-    ];
+   const tHeaders = [
+  "ID",
+  "Name",
+  "Center",   // 🔥 ADD THIS
+  "Status",
+  "Create Date",
+  "Year"
+];
 
     const tRows = terminals.map(t => [
       t.terminal_ID,
       t.fullName,
+      t.centerName,  // 👈 added
       t.isActive ? "Active" : "Inactive",
-      t.create_Date,   // 👈 added
+      t.create_Date, 
+      
       t.year           // 👈 added
     ]);
 
@@ -286,7 +293,7 @@ const exportData = () => {
             <motion.tr key={t.terminal_ID}>
               <td>{t.terminal_ID}</td>
               <td>{t.fullName}</td>
-
+              <td>{t.centerName}</td>  
               <td className="row-actions">
                 <button
                   className={`status-btn ${
@@ -337,6 +344,7 @@ const exportData = () => {
         open={!!modal}
         type={modal?.includes("beneficiary") ? "beneficiary" : "terminal"}
         initialData={editData}
+        centers={centers}
         onSubmit={submit}
         onClose={() => setModal(null)}
       />
@@ -358,8 +366,16 @@ function TableCard({ title, children }) {
     <div className="table-card">
       <h3>{title}</h3>
       <table>
-        <tbody>{children}</tbody>
-      </table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Center</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>{children}</tbody>
+</table>
     </div>
   );
 }

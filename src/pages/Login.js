@@ -8,10 +8,6 @@ function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 🔥 NEW STATES (ADDED)
-  const [tapCount, setTapCount] = useState(0);
-  const [adminUnlocked, setAdminUnlocked] = useState(false);
-
   // ================= AUTO LOGIN =================
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -21,16 +17,9 @@ function Login() {
       if (role === "Admin") window.location.replace("/admin");
       else if (role === "Terminal") window.location.replace("/terminal");
       else if (role === "Beneficiary") window.location.replace("/beneficiary");
+      else if (role === "Manager") window.location.replace("/manager"); // 🔥 ADD
     }
   }, []);
-
-  // 🔥 ADMIN UNLOCK LOGIC (ADDED)
-  useEffect(() => {
-    if (tapCount >= 10) {
-      setAdminUnlocked(true);
-      alert("🔓 Admin Login Unlocked");
-    }
-  }, [tapCount]);
 
   // ================= LOGIN FUNCTION =================
   const login = async () => {
@@ -42,35 +31,44 @@ function Login() {
     setLoading(true);
 
     try {
-      const res = await apiRequest(
-        "/api/auth/login",
-        "POST",
-        { username, password }
-      );
+      let res;
 
-      if (!res || !res.token || !res.role) {
+      // 🔥 MANAGER LOGIN API
+      if (username === "manager") {
+        res = await apiRequest(
+          "/api/manager/login",
+          "POST",
+          { username, password }
+        );
+      } else {
+        // 🔥 DEFAULT LOGIN (ADMIN / TERMINAL / BENEFICIARY)
+        res = await apiRequest(
+          "/api/auth/login",
+          "POST",
+          { username, password }
+        );
+      }
+
+      if (!res) {
         throw new Error("Invalid server response");
       }
 
-      // 🔥 BLOCK ADMIN ON MOBILE UNLESS UNLOCKED
-      if (res.role === "Admin" && !adminUnlocked) {
-        alert("❌ Admin login not allowed on mobile");
-        setLoading(false);
-        return;
-      }
-
-      localStorage.setItem("token", res.token);
-      localStorage.setItem("role", res.role);
+      // 🔥 SAVE ROLE
+      localStorage.setItem("role", res.role || (username === "manager" ? "Manager" : ""));
+      localStorage.setItem("token", res.token || "manager-token");
 
       setTimeout(() => {
         if (res.role === "Admin") window.location.replace("/admin");
         else if (res.role === "Terminal") window.location.replace("/terminal");
         else if (res.role === "Beneficiary") window.location.replace("/beneficiary");
-        else {
+        else if (res.role === "Manager" || username === "manager") {
+          window.location.replace("/manager"); // 🔥 ADD
+        } else {
           alert("Unknown role");
           localStorage.clear();
         }
       }, 300);
+
     } catch (err) {
       alert(err.message || "Invalid credentials");
       localStorage.clear();
@@ -93,7 +91,6 @@ function Login() {
           src={logo}
           alt="RMS Logo"
           className="login-logo"
-          onClick={() => setTapCount(prev => prev + 1)} // 🔥 TAP TO UNLOCK
         />
 
         {/* ===== TITLE ===== */}

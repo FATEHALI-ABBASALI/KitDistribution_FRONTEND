@@ -7,31 +7,46 @@ export default function UserFormModal({
   initialData,
   onSubmit,
   onClose,
+  centers = []
 }) {
   const [form, setForm] = useState({
     fullName: "",
     mobile: "",
     state_City: "",
+    centerId: "",
+    quantity: 1   // 🔥 NEW
   });
 
   // ===== LOAD DATA WHEN EDIT OPENS =====
   useEffect(() => {
     if (initialData) {
       setForm({
-        fullName: initialData.FullName || "",
+        fullName: initialData.FullName || initialData.fullName || "",
         mobile: initialData.Mobile || "",
         state_City: initialData.State_City || "",
+        centerId: initialData.centerId || "",
+        quantity: initialData.Quantity || initialData.quantity || 1   // 🔥 NEW
       });
     } else {
       setForm({
         fullName: "",
         mobile: "",
         state_City: "",
+        centerId: "",
+        quantity: 1   // 🔥 NEW
       });
     }
   }, [initialData, open]);
 
   const submit = () => {
+    if (type === "terminal" && !form.centerId) {
+      return alert("Please select center");
+    }
+
+    if (type === "beneficiary" && (!form.quantity || form.quantity <= 0)) {
+      return alert("Quantity must be at least 1");
+    }
+
     onSubmit(form);
   };
 
@@ -67,6 +82,24 @@ export default function UserFormModal({
               }
             />
 
+            {/* 🔥 CENTER DROPDOWN (ONLY TERMINAL) */}
+            {type === "terminal" && (
+              <select
+                className="form-input"
+                value={form.centerId}
+                onChange={(e) =>
+                  setForm({ ...form, centerId: e.target.value })
+                }
+              >
+                <option value="">Select Center</option>
+                {centers.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} ({c.city})
+                  </option>
+                ))}
+              </select>
+            )}
+
             {/* MOBILE (ONLY BENEFICIARY) */}
             {type === "beneficiary" && (
               <input
@@ -87,6 +120,19 @@ export default function UserFormModal({
                 value={form.state_City}
                 onChange={(e) =>
                   setForm({ ...form, state_City: e.target.value })
+                }
+              />
+            )}
+
+            {/* 🔥 QUANTITY (ONLY BENEFICIARY) */}
+            {type === "beneficiary" && (
+              <input
+                className="form-input"
+                type="number"
+                placeholder="Quantity (No. of Kits)"
+                value={form.quantity}
+                onChange={(e) =>
+                  setForm({ ...form, quantity: parseInt(e.target.value) })
                 }
               />
             )}
