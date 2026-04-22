@@ -8,7 +8,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 🔥 MOBILE BLOCK
+  // 🔥 MOBILE DETECT
   const [isMobile, setIsMobile] = useState(false);
   const [tapCount, setTapCount] = useState(0);
   const [allowMobileAdmin, setAllowMobileAdmin] = useState(false);
@@ -31,14 +31,16 @@ function Login() {
     }
   }, []);
 
-  // ================= SECRET TAP =================
-  const handleSecretTap = () => {
+  // ================= SECRET LOGO TAP =================
+  const handleLogoTap = () => {
+    if (!isMobile) return;
+
     const count = tapCount + 1;
     setTapCount(count);
 
     if (count >= 10) {
       setAllowMobileAdmin(true);
-      alert("Admin mobile access unlocked 🔓");
+      alert("🔓 Admin unlocked on mobile!");
     }
   };
 
@@ -49,9 +51,13 @@ function Login() {
       return;
     }
 
-    // 🔥 BLOCK ADMIN ON MOBILE
-    if (username.toLowerCase() === "admin" && isMobile && !allowMobileAdmin) {
-      alert("Admin login only allowed on Desktop 💻");
+    // 🔥 ADMIN BLOCK ON MOBILE
+    if (
+      username.toLowerCase() === "admin" &&
+      isMobile &&
+      !allowMobileAdmin
+    ) {
+      alert("❌ Admin not allowed on mobile");
       return;
     }
 
@@ -93,57 +99,56 @@ function Login() {
 
   return (
     <div style={styles.bg}>
-      
-      {/* 🔥 MOBILE BLOCK SCREEN */}
-      {isMobile && !allowMobileAdmin ? (
-        <div style={styles.mobileBlock}>
-          <h2>🚫 Desktop Only</h2>
-          <p>Admin panel not allowed on mobile</p>
+      <motion.div
+        style={styles.card}
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        {/* 🔥 LOGO (Tap here for unlock) */}
+        <img
+          src={logo}
+          alt="logo"
+          style={styles.logo}
+          onClick={handleLogoTap}
+        />
 
-          {/* 🔥 SECRET TAP AREA */}
-          <div onClick={handleSecretTap} style={styles.secret}></div>
-        </div>
-      ) : (
-        <motion.div
-          style={styles.card}
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
+        <h2 style={styles.title}>Kit Distribution System</h2>
+        <p style={styles.subtitle}>Secure Login Portal</p>
+
+        {/* INPUTS */}
+        <input
+          style={styles.input}
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
+
+        <input
+          type="password"
+          style={styles.input}
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        {/* BUTTON */}
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.03 }}
+          style={styles.button}
+          onClick={login}
+          disabled={loading}
         >
-          {/* LOGO */}
-          <img src={logo} alt="logo" style={styles.logo} />
+          {loading ? "Logging in..." : "Login"}
+        </motion.button>
 
-          {/* TITLE */}
-          <h2 style={styles.title}>Kit Distribution System</h2>
-          <p style={styles.subtitle}>Secure Login Portal</p>
-
-          {/* INPUTS */}
-          <input
-            style={styles.input}
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-
-          <input
-            type="password"
-            style={styles.input}
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-
-          {/* BUTTON */}
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ scale: 1.03 }}
-            style={styles.button}
-            onClick={login}
-            disabled={loading}
-          >
-            {loading ? "Logging in..." : "Login"}
-          </motion.button>
-        </motion.div>
-      )}
+        {/* 🔥 Hint (optional) */}
+        {isMobile && !allowMobileAdmin && (
+          <p style={{ fontSize: "11px", marginTop: "10px", color: "#999" }}>
+            Admin restricted on mobile
+          </p>
+        )}
+      </motion.div>
     </div>
   );
 }
@@ -171,7 +176,8 @@ const styles = {
 
   logo: {
     width: "70px",
-    marginBottom: "10px"
+    marginBottom: "10px",
+    cursor: "pointer"
   },
 
   title: {
@@ -200,17 +206,5 @@ const styles = {
     background: "#2563eb",
     color: "white",
     cursor: "pointer"
-  },
-
-  mobileBlock: {
-    textAlign: "center",
-    color: "white"
-  },
-
-  secret: {
-    marginTop: "20px",
-    height: "40px",
-    width: "40px",
-    background: "transparent"
   }
 };
