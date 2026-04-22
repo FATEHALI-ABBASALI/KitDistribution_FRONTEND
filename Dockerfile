@@ -1,15 +1,20 @@
+# Use Node base image
 FROM node:18
 
+# Set working directory
 WORKDIR /app
 
-COPY . .
+# Copy package files first (better caching)
+COPY package*.json ./
 
+# Install dependencies
 RUN npm install
 
-RUN npm run build
+# Copy all project files
+COPY . .
 
-RUN npm install -g serve
-
+# Expose port 3000
 EXPOSE 3000
 
-CMD ["serve", "-s", "build", "-l", "3000"]
+# Start React app
+CMD ["npm", "start"]
