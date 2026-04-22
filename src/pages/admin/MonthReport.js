@@ -42,7 +42,7 @@ export default function MonthReport() {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        "http://localhost:8080/api/admin/month-wise-report/pdf",
+        "https://kitdistributionapi-production.up.railway.app/api/admin/month-wise-report/pdf",
         {
           headers: {
             Authorization: "Bearer " + token,
