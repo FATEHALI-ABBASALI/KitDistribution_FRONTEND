@@ -1,20 +1,21 @@
-# Use Node base image
-FROM node:18
+FROM node:18-alpine
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files first (better caching)
-COPY package*.json ./
+# Install serve globally (lightweight static server)
+RUN npm install -g serve
 
-# Install dependencies
+# Copy files
+COPY package*.json ./
 RUN npm install
 
-# Copy all project files
 COPY . .
 
-# Expose port 3000
+# Build React app
+RUN npm run build
+
+# Expose port
 EXPOSE 3000
 
-# Start React app
-CMD ["npm", "start"]
+# Serve build (production)
+CMD ["serve", "-s", "build", "-l", "3000"]
