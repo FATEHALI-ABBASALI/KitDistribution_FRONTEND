@@ -46,7 +46,7 @@ export default function BeneficiaryReport() {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        "http://localhost:8080/api/admin/beneficiary-report/pdf",
+        "https://kitdistributionapi-production.up.railway.app/api/admin/beneficiary-report/pdf",
         {
           headers: {
             Authorization: "Bearer " + token
