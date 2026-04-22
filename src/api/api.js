@@ -1,4 +1,4 @@
-const BASE_URL = "https://kitdistributionapi-production.up.railway.app";
+const BASE_URL = "https://kit-distribution-api-production-6268.up.railway.app";
 
 /* ================= TOKEN ================= */
 function getToken() {
