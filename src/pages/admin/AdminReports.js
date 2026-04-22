@@ -52,7 +52,7 @@ export default function AdminReports() {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await fetch("https://kitdistributionapi-production.up.railway.app/api" + url, {
+      const res = await fetch("https://kit-distribution-api-production-6268.up.railway.app/api" + url, {
         headers: {
           Authorization: "Bearer " + token,
         },
