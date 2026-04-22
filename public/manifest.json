@@ -1,0 +1,26 @@
+{
+  "short_name": "KitApp",
+  "name": "Kit Distribution System",
+  "description": "Admin, Terminal and Beneficiary management for kit distribution",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8fbff",
+  "theme_color": "#1976d2",
+
+  "icons": [
+    {
+      "src": "logo192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
