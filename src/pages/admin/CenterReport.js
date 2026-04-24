@@ -73,7 +73,7 @@ export default function CenterReport() {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        "http://localhost:8080/api/admin/center-wise-report/pdf",
+        "https://kit-distribution-api-production-6268.up.railway.app/api/admin/center-wise-report/pdf",
         {
           headers: {
             Authorization: "Bearer " + token
