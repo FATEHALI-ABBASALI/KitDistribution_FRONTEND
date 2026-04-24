@@ -25,7 +25,7 @@ const AdminUpload = () => {
           ? "/api/upload/terminal-users"
           : "/api/upload/beneficiaries";
 
-      const res = await fetch("http://localhost:8080" + url, {
+      const res = await fetch("https://kit-distribution-api-production-6268.up.railway.app" + url, {
         method: "POST",
         headers: {
           Authorization: "Bearer " + token // 🔥 IMPORTANT
