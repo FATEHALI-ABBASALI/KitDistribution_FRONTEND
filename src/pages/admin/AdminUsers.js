@@ -446,7 +446,7 @@ function DataRow({ cells, onEdit, onDelete, onReset }) {
         <button
   className="view-btn"
   onClick={() =>
-window.open(`http://localhost:8080/api/admin/view-card/${"Card_" + cells[0] + ".png"}`)  }
+window.open(`https://kit-distribution-api-production-6268.up.railway.app/api/admin/view-card/${"Card_" + cells[0] + ".png"}`)  }
 >
   👁 View
 </button>
@@ -454,7 +454,7 @@ window.open(`http://localhost:8080/api/admin/view-card/${"Card_" + cells[0] + ".
 <button
   className="download-btn"
   onClick={() =>
-    window.open(`http://localhost:8080/api/admin/download-card/${"Card_" + cells[0] + ".png"}`)
+    window.open(`https://kit-distribution-api-production-6268.up.railway.app/api/admin/download-card/${"Card_" + cells[0] + ".png"}`)
   }
 >
   ⬇ Download
