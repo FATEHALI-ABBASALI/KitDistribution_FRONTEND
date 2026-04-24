@@ -14,6 +14,8 @@ import MonthReport from "./pages/admin/MonthReport";
 import CenterReport from "./pages/admin/CenterReport";
 import LowStockReport from "./pages/admin/LowStockReport";
 import BeneficiaryReport from "./pages/admin/BeneficiaryReport";
+import KitWiseReport from "./pages/admin/KitWiseReport";
+
 
 // ✅ NEW: Annual & Terminal Reports
 import AdminAnnualReports from "./pages/admin/AdminAnnualReports";
@@ -130,6 +132,8 @@ export default function App() {
         <Route path="/admin/center-report" element={<CenterReport />} />
         <Route path="/admin/low-stock-report" element={<LowStockReport />} />
         <Route path="/admin/beneficiary-report" element={<BeneficiaryReport />} />
+        <Route path="/admin/kitwise-report" element={<KitWiseReport />} />
+
         <Route path="/manager-login" element={<ManagerLogin />} />
         <Route path="/manager" element={<ManagerDashboard />} />
         {/* ✅ NEW: Terminal-wise Report */}

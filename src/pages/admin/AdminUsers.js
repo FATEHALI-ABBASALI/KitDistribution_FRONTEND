@@ -5,6 +5,7 @@ import { apiRequest } from "../../api/api";
 import UserFormModal from "../../components/UserFormModal";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import AdminUpload from "../../components/AdminUpload";
+import * as XLSX from "xlsx";
 
 export default function AdminUsers() {
   const [users, setUsers] = useState({ beneficiaries: [], terminals: [] });
@@ -12,7 +13,51 @@ export default function AdminUsers() {
   const [editData, setEditData] = useState(null);
   const [deleteInfo, setDeleteInfo] = useState(null);
   const [centers, setCenters] = useState([]);
+  const [search, setSearch] = useState("");
+  const [cityFilter, setCityFilter] = useState("");
   /* ================= LOAD USERS ================= */
+  /* ================= VALIDATION ================= */
+
+const nameRegex = /^[A-Za-z ]+$/;
+
+const validateBeneficiary = (data) => {
+
+
+  if (!data.fullName || data.fullName.trim().length < 3) {
+    return "Full Name must be at least 3 characters";
+  }
+
+  if (!/^[A-Za-z ]+$/.test(data.fullName.trim())) {
+    return "Full Name cannot contain special characters";
+  }
+
+  if (!/^[0-9]{10}$/.test(data.mobile)) {
+    return "Mobile number must be exactly 10 digits";
+  }
+const city = data.state_City?.trim();
+
+if (!city) {
+  return "State/City is required";
+}
+
+if (!/^[A-Za-z ]+$/.test(city)) {
+  return "State/City must contain only alphabets";
+}
+
+  return null;
+};
+
+const validateTerminal = (data) => {
+  if (!data.fullName || data.fullName.trim().length < 3) {
+    return "Terminal name must be at least 3 characters";
+  }
+
+  if (!nameRegex.test(data.fullName.trim())) {
+    return "Terminal name cannot contain special characters";
+  }
+
+  return null;
+};
   const loadUsers = async () => {
     try {
       const data = await apiRequest("/api/admin/users");
@@ -67,6 +112,19 @@ export default function AdminUsers() {
   /* ================= ADD / EDIT ================= */
   const submit = async (data) => {
     try {
+
+       let error = null;
+
+    if (modal?.includes("beneficiary")) {
+      error = validateBeneficiary(data);
+    } else if (modal?.includes("terminal")) {
+      error = validateTerminal(data);
+    }
+
+    if (error) {
+      alert(error);
+      return;
+    }
       // 🔵 ADD BENEFICIARY
       if (modal === "beneficiary-add") {
         const res = await apiRequest("/api/admin/beneficiary", "POST", data);
@@ -117,81 +175,43 @@ if (modal === "terminal-edit") {
       alert(err.message || "Operation failed");
     }
   };
-
+const uniqueCities = [
+  ...new Set(users.beneficiaries.map(b => b.state_City))
+];
   /* ================= EXPORT ================= */
+
 const exportData = () => {
   try {
-    const { beneficiaries, terminals } = users;
+    const { beneficiaries = [], terminals = [] } = users;
 
-    /* ---------- BENEFICIARIES FILE ---------- */
-    const bHeaders = [
-      "ID",
-      "Name",
-      "Mobile",
-      "Location",
-      "Status",
-      "Create Date",
-      "Year"
-    ];
+    const workbook = XLSX.utils.book_new();
 
-    const bRows = beneficiaries.map(b => [
-      b.beneficiary_ID,
-      b.fullName,
-      b.mobile,
-      b.state_City,
-      b.status,
-      b.create_Date,   // 👈 added
-      b.year           // 👈 added
-    ]);
+    /* ================= BENEFICIARY SHEET ================= */
+    const beneficiaryData = beneficiaries.map(b => ({
+      FullName: b.fullName,
+      Mobile: b.mobile,
+      City: b.state_City,
+      Quantity: b.quantity || 1   // 🔥 IMPORTANT FOR UPLOAD
+    }));
 
-    const bCsv =
-      [bHeaders.join(","), ...bRows.map(r => r.join(","))].join("\n");
+    const beneficiarySheet = XLSX.utils.json_to_sheet(beneficiaryData);
+    XLSX.utils.book_append_sheet(workbook, beneficiarySheet, "Beneficiaries");
 
-    const bBlob = new Blob([bCsv], { type: "text/csv" });
-    const bUrl = window.URL.createObjectURL(bBlob);
+    /* ================= TERMINAL SHEET ================= */
+    const terminalData = terminals.map(t => ({
+      FullName: t.fullName,
+      CenterId:
+        centers.find(c => c.name === t.centerName)?.id || ""
+    }));
 
-    const bLink = document.createElement("a");
-    bLink.href = bUrl;
-    bLink.download = "beneficiaries.csv";
-    bLink.click();
+    const terminalSheet = XLSX.utils.json_to_sheet(terminalData);
+    XLSX.utils.book_append_sheet(workbook, terminalSheet, "TerminalUsers");
 
-    window.URL.revokeObjectURL(bUrl);
-
-
-    /* ---------- TERMINALS FILE ---------- */
-   const tHeaders = [
-  "ID",
-  "Name",
-  "Center",   // 🔥 ADD THIS
-  "Status",
-  "Create Date",
-  "Year"
-];
-
-    const tRows = terminals.map(t => [
-      t.terminal_ID,
-      t.fullName,
-      t.centerName,  // 👈 added
-      t.isActive ? "Active" : "Inactive",
-      t.create_Date, 
-      
-      t.year           // 👈 added
-    ]);
-
-    const tCsv =
-      [tHeaders.join(","), ...tRows.map(r => r.join(","))].join("\n");
-
-    const tBlob = new Blob([tCsv], { type: "text/csv" });
-    const tUrl = window.URL.createObjectURL(tBlob);
-
-    const tLink = document.createElement("a");
-    tLink.href = tUrl;
-    tLink.download = "terminal_users.csv";
-    tLink.click();
-
-    window.URL.revokeObjectURL(tUrl);
+    /* ================= DOWNLOAD ================= */
+    XLSX.writeFile(workbook, "Upload_Format.xlsx");
 
   } catch (err) {
+    console.error(err);
     alert("Export failed");
   }
 };
@@ -218,6 +238,7 @@ const exportData = () => {
 
         {/* ACTIONS */}
         <div className="action-row" style={styles.row}>
+                   
           <div style={styles.left}>
             <button
               className="primary-btn"
@@ -228,7 +249,7 @@ const exportData = () => {
             >
               ➕ Add Beneficiary
             </button>
-
+                
             <button
               className="terminal-btn"
               onClick={() => {
@@ -253,10 +274,44 @@ const exportData = () => {
             <AdminUpload />
           </div>
         </div>
+   {/* 🔍 FILTER + SEARCH */}
+            <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
 
+              <input
+                type="text"
+                placeholder="Search by Name / Mobile"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="form-input"
+              />
+
+              <select
+                value={cityFilter}
+                onChange={(e) => setCityFilter(e.target.value)}
+                className="form-input"
+              >
+                <option value="">All Cities</option>
+                {uniqueCities.map((city, i) => (
+                  <option key={i} value={city}>{city}</option>
+                ))}
+              </select>
+
+            </div>
         {/* BENEFICIARIES */}
         <TableCard title="Beneficiaries">
-          {users.beneficiaries.map((b) => (
+          {users.beneficiaries.filter((b) => {
+           
+
+    const matchSearch =
+      b.fullName.toLowerCase().includes(search.toLowerCase()) ||
+      b.mobile.includes(search);
+
+    const matchCity =
+      !cityFilter || b.state_City === cityFilter;
+
+    return matchSearch && matchCity;
+  })
+  .map((b) => (
             <DataRow
               key={b.beneficiary_ID}
               cells={[

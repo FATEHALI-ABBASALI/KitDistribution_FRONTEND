@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom"; // ✅ ADDED
+import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
-
 import { apiRequest } from "../../api/api";
 
 export default function AdminReports() {
@@ -11,9 +10,9 @@ export default function AdminReports() {
   const [rows, setRows] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
 
-  const navigate = useNavigate(); // ✅ ADDED
+  const navigate = useNavigate();
 
-  // ================= LOAD REPORT =================
+  // ================= LOAD =================
   const load = async () => {
     if (!from || !to) {
       alert("Select FROM and TO date");
@@ -25,10 +24,19 @@ export default function AdminReports() {
         `/api/admin/report-range?from=${from}&to=${to}`
       );
 
-      setRows(data);
+      // 🔥 NORMALIZE DATA (MOST IMPORTANT FIX)
+      const formatted = data.map((r) => ({
+        beneficiary: r.beneficiaryName || r.BeneficiaryName || r.beneficiary_ID || r.Beneficiary_ID,
+        terminal: r.terminalName || r.TerminalName || r.terminal_ID || r.Terminal_ID,
+        month: r.month || r.Month,
+        amount: r.amount || r.Amount,
+        status: r.status || r.Status
+      }));
 
-      const total = data.reduce(
-        (sum, r) => sum + Number(r.Amount || r.amount || 0),
+      setRows(formatted);
+
+      const total = formatted.reduce(
+        (sum, r) => sum + Number(r.amount || 0),
         0
       );
 
@@ -39,21 +47,18 @@ export default function AdminReports() {
     }
   };
 
-  // ================= DOWNLOAD FILE =================
+  // ================= DOWNLOAD =================
   const downloadFile = async (url, filename) => {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await fetch(
-        "http://localhost:8080/api" + url,
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-          },
-        }
-      );
+      const res = await fetch("http://localhost:8080/api" + url, {
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+      });
 
-      if (!res.ok) throw new Error("Download failed");
+      if (!res.ok) throw new Error();
 
       const blob = await res.blob();
       const link = document.createElement("a");
@@ -69,188 +74,263 @@ export default function AdminReports() {
     <>
       <Navbar />
 
-      <motion.div
-        className="reports-page"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.25 }}
-      >
-        {/* ===== Title ===== */}
-        <h1 className="reports-title">Reports Dashboard</h1>
+      <motion.div style={styles.container} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        
+        {/* TITLE */}
+        <h1 style={styles.title}>📊 Reports Dashboard</h1>
 
-        {/* ===== Date Controls ===== */}
-        <div className="reports-filter">
-          <div className="filter-inputs">
+        {/* FILTER */}
+        <div style={styles.filterBox}>
+          <div style={styles.dateGroup}>
             <input
               type="date"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
+              style={styles.input}
             />
             <input
               type="date"
               value={to}
               onChange={(e) => setTo(e.target.value)}
+              style={styles.input}
             />
           </div>
 
           <motion.button
-            whileTap={{ scale: 0.96 }}
+            whileTap={{ scale: 0.95 }}
+            style={styles.primaryBtn}
             onClick={load}
-            className="primary-btn"
           >
             View Report
           </motion.button>
         </div>
 
-        {/* ===== NEW REPORT TYPE BUTTONS ===== */}
-        <div style={{ marginBottom: "20px", display: "flex", gap: "10px" }}>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            className="primary-btn"
-            onClick={() => navigate("/admin/reports-annual")}
-          >
-            Annual Report
-          </motion.button>
-
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            className="primary-btn"
-            onClick={() => navigate("/admin/reports-terminal")}
-          >
-            Terminal-wise Report
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ scale: 1.05 }}
-            className="primary-btn"
-            onClick={() => navigate("/admin/month-report")}
-          >
-            📅 Month-wise Report
-          </motion.button>
-          
-        </div>
-        <motion.button
-        whileTap={{ scale: 0.95 }}
-        whileHover={{ scale: 1.05 }}
-        className="primary-btn"
-        style={{ marginRight: "10px", marginBottom: "10px" }} // 🔥 ADD
-        onClick={() => navigate("/admin/low-stock-report")}
-      >
-        ⚠️ Low Stock Report
-      </motion.button>
-      
-      <motion.button
-        whileTap={{ scale: 0.95 }}
-        whileHover={{ scale: 1.05 }}
-        className="primary-btn"
-        style={{ marginRight: "10px", marginBottom: "10px" }} // 🔥 ADD
-
-        onClick={() => navigate("/admin/center-report")}
-      >
-        🏢 Center-wise Report
-      </motion.button>
-
-            <motion.button
-        whileTap={{ scale: 0.95 }}
-        whileHover={{ scale: 1.05 }}
-        className="primary-btn"
-        onClick={() => navigate("/admin/beneficiary-report")}
-      >
-        👤 Beneficiary Report
-      </motion.button>
-        {/* ===== Summary Cards ===== */}
-        <div className="reports-cards">
-          <SummaryCard
-            label="Total Records"
-            value={rows.length}
-            color="blue"
-          />
-          <SummaryCard
-            label="Total Amount"
-            value={`₹${totalAmount}`}
-            color="green"
-          />
+        {/* REPORT BUTTONS */}
+        <div style={styles.buttonGrid}>
+          <Button onClick={() => navigate("/admin/reports-annual")} label="📅 Annual" />
+          <Button onClick={() => navigate("/admin/reports-terminal")} label="🖥 Terminal" />
+          <Button onClick={() => navigate("/admin/month-report")} label="📆 Monthly" />
+          <Button onClick={() => navigate("/admin/low-stock-report")} label="⚠️ Low Stock" />
+          <Button onClick={() => navigate("/admin/center-report")} label="🏢 Center" />
+          <Button onClick={() => navigate("/admin/beneficiary-report")} label="👤 Beneficiary" />
+          <Button onClick={() => navigate("/admin/kitwise-report")} label="📦 Kit-wise" />
         </div>
 
-        {/* ===== Table ===== */}
-        <div className="reports-table">
-          <table>
+        {/* SUMMARY */}
+        <div style={styles.cards}>
+          <SummaryCard label="Total Records" value={rows.length} />
+          <SummaryCard label="Total Amount" value={`₹${totalAmount}`} />
+        </div>
+
+        {/* TABLE */}
+        <div style={styles.tableWrapper}>
+          <table style={styles.table}>
             <thead>
               <tr>
-                <th>Beneficiary ID</th>
-                <th>Terminal ID</th>
-                <th>Month</th>
-                <th>Amount</th>
-                <th>Status</th>
+                <th style={styles.th}>#</th>
+                <th style={styles.th}>Beneficiary</th>
+                <th style={styles.th}>Terminal</th>
+                <th style={styles.th}>Month</th>
+                <th style={styles.th}>Amount</th>
+                <th style={styles.th}>Status</th>
               </tr>
             </thead>
 
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="empty">
+                  <td colSpan="6" style={styles.empty}>
                     No data found
                   </td>
                 </tr>
               ) : (
                 rows.map((r, i) => (
-                  <motion.tr
-                    key={i}
-                    whileHover={{ backgroundColor: "#f9fafb" }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    <td>{r.Beneficiary_ID || r.beneficiary_ID}</td>
-                    <td>{r.Terminal_ID || r.terminal_ID}</td>
-                    <td>{r.Month || r.month}</td>
-                    <td className="amount">
-                      ₹{r.Amount || r.amount}
-                    </td>
-                    <td>{r.Status || r.status}</td>
-                  </motion.tr>
+                  <tr key={i} style={styles.tr}>
+                    <td>{i + 1}</td>
+                    <td>{r.beneficiary}</td>
+                    <td>{r.terminal}</td>
+                    <td>{r.month}</td>
+                    <td style={styles.amount}>₹{r.amount}</td>
+                    <td>{r.status}</td>
+                  </tr>
                 ))
               )}
             </tbody>
           </table>
         </div>
 
-        {/* ===== Download Buttons ===== */}
-        <div className="reports-actions">
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            className="danger-btn"
+        {/* DOWNLOAD */}
+        <div style={styles.actions}>
+          <button
+            style={styles.dangerBtn}
             onClick={() =>
               downloadFile("/admin/report/pdf", "KitReport.pdf")
             }
           >
-            Download PDF
-          </motion.button>
+            ⬇ Download PDF
+          </button>
 
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            className="success-btn"
+          <button
+            style={styles.successBtn}
             onClick={() =>
               downloadFile("/admin/report/excel", "KitReport.xlsx")
             }
           >
-            Download Excel
-          </motion.button>
+            ⬇ Download Excel
+          </button>
         </div>
       </motion.div>
     </>
   );
 }
 
-/* ===== SMALL COMPONENT ===== */
+// ================= SMALL COMPONENTS =================
 
-function SummaryCard({ label, value, color }) {
+function SummaryCard({ label, value }) {
   return (
-    <motion.div
-      className={`summary-card ${color}`}
-      whileHover={{ scale: 1.04 }}
-      transition={{ duration: 0.2 }}
-    >
+    <motion.div style={styles.card} whileHover={{ scale: 1.05 }}>
       <p>{label}</p>
       <h2>{value}</h2>
     </motion.div>
   );
 }
+
+function Button({ label, onClick }) {
+  return (
+    <motion.button
+      whileTap={{ scale: 0.95 }}
+      whileHover={{ scale: 1.05 }}
+      style={styles.navBtn}
+      onClick={onClick}
+    >
+      {label}
+    </motion.button>
+  );
+}
+
+// ================= STYLES =================
+
+const styles = {
+  container: {
+    padding: "25px",
+    background: "#f3f4f6",
+    minHeight: "100vh"
+  },
+
+  title: {
+    fontSize: "28px",
+    fontWeight: "700",
+    marginBottom: "20px"
+  },
+
+  filterBox: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+    marginBottom: "20px"
+  },
+
+  dateGroup: {
+    display: "flex",
+    gap: "10px"
+  },
+
+  input: {
+    padding: "10px",
+    borderRadius: "8px",
+    border: "1px solid #ccc"
+  },
+
+  primaryBtn: {
+    background: "#2563eb",
+    color: "white",
+    padding: "10px 15px",
+    borderRadius: "8px",
+    border: "none",
+    cursor: "pointer"
+  },
+
+  buttonGrid: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+    marginBottom: "20px"
+  },
+
+  navBtn: {
+    background: "#1e293b",
+    color: "white",
+    padding: "10px 15px",
+    borderRadius: "8px",
+    border: "none",
+    cursor: "pointer"
+  },
+
+  cards: {
+    display: "flex",
+    gap: "15px",
+    marginBottom: "20px"
+  },
+
+  card: {
+    background: "linear-gradient(135deg,#4f46e5,#06b6d4)",
+    color: "white",
+    padding: "20px",
+    borderRadius: "12px",
+    minWidth: "180px"
+  },
+
+  tableWrapper: {
+    background: "white",
+    borderRadius: "12px",
+    overflow: "hidden",
+    boxShadow: "0 5px 15px rgba(0,0,0,0.08)"
+  },
+
+  table: {
+    width: "100%",
+    borderCollapse: "collapse"
+  },
+
+  th: {
+    background: "#111827",
+    color: "white",
+    padding: "12px"
+  },
+
+  tr: {
+    borderBottom: "1px solid #eee"
+  },
+
+  amount: {
+    fontWeight: "bold",
+    color: "green"
+  },
+
+  empty: {
+    textAlign: "center",
+    padding: "20px"
+  },
+
+  actions: {
+    marginTop: "20px",
+    display: "flex",
+    gap: "10px"
+  },
+
+  dangerBtn: {
+    background: "#dc2626",
+    color: "white",
+    padding: "10px 15px",
+    borderRadius: "8px",
+    border: "none"
+  },
+
+  successBtn: {
+    background: "#16a34a",
+    color: "white",
+    padding: "10px 15px",
+    borderRadius: "8px",
+    border: "none"
+  }
+};

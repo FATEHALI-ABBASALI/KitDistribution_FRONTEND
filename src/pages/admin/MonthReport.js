@@ -1,93 +1,208 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../../api/api";
 import Navbar from "../../components/Navbar";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 
 export default function MonthReport() {
   const [data, setData] = useState([]);
+  const [totalAmount, setTotalAmount] = useState(0);
 
   useEffect(() => {
     loadData();
   }, []);
 
+  // ================= LOAD =================
   const loadData = async () => {
-    const res = await apiRequest("/api/admin/month-wise-report");
-    setData(res);
+    try {
+      const res = await apiRequest("/api/admin/month-wise-report");
+
+      // 🔥 NORMALIZE DATA
+      const formatted = res.map((m) => ({
+        month: m.month || m.Month,
+        center: m.centerName || m.CenterName,
+        totalKits: m.totalKits || m.TotalKits,
+        totalAmount: m.totalAmount || m.TotalAmount
+      }));
+
+      setData(formatted);
+
+      const total = formatted.reduce(
+        (sum, r) => sum + Number(r.totalAmount || 0),
+        0
+      );
+
+      setTotalAmount(total);
+    } catch {
+      alert("Failed to load report");
+    }
   };
 
-  // 🔥 PDF FUNCTION
-  const exportPDF = () => {
-    const doc = new jsPDF();
+  // ================= DOWNLOAD PDF (BACKEND) =================
+  const downloadPDF = async () => {
+    try {
+      const token = localStorage.getItem("token");
 
-    doc.setFontSize(16);
-    doc.text("Month-wise Report", 14, 10);
+      const res = await fetch(
+        "http://localhost:8080/api/admin/month-wise-report/pdf",
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        }
+      );
 
-    autoTable(doc, {
-      startY: 20,
-      head: [["Month", "Total Kits", "Total Amount"]],
-      body: data.map((m) => [
-        m.month,
-        m.totalKits,
-        `₹${m.totalAmount}`
-      ]),
-    });
+      if (!res.ok) throw new Error();
 
-    doc.save("month-report.pdf");
+      const blob = await res.blob();
+      const link = document.createElement("a");
+      link.href = window.URL.createObjectURL(blob);
+      link.download = "MonthWiseReport.pdf";
+      link.click();
+    } catch {
+      alert("Download failed");
+    }
   };
 
   return (
     <>
       <Navbar />
 
-      <div className="container mt-4">
-        <h2 className="mb-4">📅 Month-wise Report</h2>
+      <div style={styles.container}>
+        
+        {/* TITLE */}
+        <h2 style={styles.title}>📅 Month-wise Report</h2>
 
-        {/* 🔥 PDF BUTTON */}
-        <button
-          className="btn btn-danger mb-3"
-          onClick={exportPDF}
-        >
-          📄 Download PDF
-        </button>
+        {/* ACTION */}
+        <div style={styles.actions}>
+          <button style={styles.dangerBtn} onClick={downloadPDF}>
+            ⬇ Download PDF
+          </button>
+        </div>
 
-        <div className="card shadow-sm">
-          <div className="card-body">
+        {/* SUMMARY */}
+        <div style={styles.cards}>
+          <Card label="Total Rows" value={data.length} />
+          <Card label="Total Amount" value={`₹${totalAmount}`} />
+        </div>
 
-            <table className="table table-striped">
-              <thead>
+        {/* TABLE */}
+        <div style={styles.tableWrapper}>
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>#</th>
+                <th style={styles.th}>Month</th>
+                <th style={styles.th}>Center</th>
+                <th style={styles.th}>Total Kits</th>
+                <th style={styles.th}>Amount</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {data.length === 0 ? (
                 <tr>
-                  <th>#</th>
-                  <th>Month</th>
-                  <th>Total Kits</th>
-                  <th>Total Amount</th>
+                  <td colSpan="5" style={styles.empty}>
+                    No data found
+                  </td>
                 </tr>
-              </thead>
-
-              <tbody>
-                {data.length === 0 ? (
-                  <tr>
-                    <td colSpan="4" className="text-center">
-                      No data found
-                    </td>
+              ) : (
+                data.map((m, i) => (
+                  <tr key={i} style={styles.tr}>
+                    <td>{i + 1}</td>
+                    <td>{m.month}</td>
+                    <td>{m.center}</td>
+                    <td>{m.totalKits}</td>
+                    <td style={styles.amount}>₹{m.totalAmount}</td>
                   </tr>
-                ) : (
-                  data.map((m, i) => (
-                    <tr key={i}>
-                      <td>{i + 1}</td>
-                      <td>{m.month}</td>
-                      <td>{m.totalKits}</td>
-                      <td>₹{m.totalAmount}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-
-            </table>
-
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </>
   );
 }
+
+// ================= CARD =================
+function Card({ label, value }) {
+  return (
+    <div style={styles.card}>
+      <p>{label}</p>
+      <h3>{value}</h3>
+    </div>
+  );
+}
+
+// ================= STYLES =================
+const styles = {
+  container: {
+    padding: "25px",
+    background: "#f3f4f6",
+    minHeight: "100vh"
+  },
+
+  title: {
+    fontSize: "26px",
+    fontWeight: "700",
+    marginBottom: "15px"
+  },
+
+  actions: {
+    marginBottom: "15px"
+  },
+
+  dangerBtn: {
+    background: "#dc2626",
+    color: "white",
+    padding: "10px 15px",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer"
+  },
+
+  cards: {
+    display: "flex",
+    gap: "15px",
+    marginBottom: "20px"
+  },
+
+  card: {
+    background: "linear-gradient(135deg,#4f46e5,#06b6d4)",
+    color: "white",
+    padding: "15px",
+    borderRadius: "10px",
+    minWidth: "150px"
+  },
+
+  tableWrapper: {
+    background: "white",
+    borderRadius: "10px",
+    overflow: "hidden",
+    boxShadow: "0 5px 15px rgba(0,0,0,0.08)"
+  },
+
+  table: {
+    width: "100%",
+    borderCollapse: "collapse"
+  },
+
+  th: {
+    background: "#111827",
+    color: "white",
+    padding: "12px"
+  },
+
+  tr: {
+    borderBottom: "1px solid #eee"
+  },
+
+  amount: {
+    fontWeight: "bold",
+    color: "green"
+  },
+
+  empty: {
+    textAlign: "center",
+    padding: "20px"
+  }
+};

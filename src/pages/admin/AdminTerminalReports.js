@@ -6,11 +6,9 @@ import { apiRequest } from "../../api/api";
 export default function AdminTerminalReports() {
   const [rows, setRows] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
-
-  // 🔥 ACTIVE YEAR (FROM BACKEND)
   const [activeYear, setActiveYear] = useState("");
 
-  // ================= LOAD ACTIVE YEAR =================
+  // ================= LOAD YEAR =================
   const loadYear = async () => {
     try {
       const data = await apiRequest("/api/year/active-year");
@@ -25,9 +23,18 @@ export default function AdminTerminalReports() {
     try {
       const data = await apiRequest(`/api/admin/report-terminal`);
 
-      setRows(data);
+      // 🔥 NORMALIZE DATA
+      const formatted = data.map((r) => ({
+        terminalId: r.Terminal_ID || r.terminal_ID,
+        terminalName: r.TerminalName || r.terminalName,
+        centerName: r.CenterName || r.centerName,
+        totalAmount: r.TotalAmount || r.totalAmount,
+        totalRecords: r.TotalRecords || r.totalRecords
+      }));
 
-      const total = data.reduce(
+      setRows(formatted);
+
+      const total = formatted.reduce(
         (sum, r) => sum + Number(r.totalAmount || 0),
         0
       );
@@ -38,12 +45,12 @@ export default function AdminTerminalReports() {
     }
   };
 
-  // 🔥 LOAD YEAR ON PAGE LOAD
+  // ================= LOAD YEAR INIT =================
   useEffect(() => {
     loadYear();
   }, []);
 
-  // 🔥 WHEN YEAR CHANGES (ADMIN SIDE)
+  // ================= YEAR CHANGE EVENT =================
   useEffect(() => {
     const handleYearChange = () => {
       loadYear();
@@ -63,16 +70,13 @@ export default function AdminTerminalReports() {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await fetch(
-        "http://localhost:8080/api" + url,
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-          },
-        }
-      );
+      const res = await fetch("http://localhost:8080/api" + url, {
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+      });
 
-      if (!res.ok) throw new Error("Download failed");
+      if (!res.ok) throw new Error();
 
       const blob = await res.blob();
       const link = document.createElement("a");
@@ -88,31 +92,27 @@ export default function AdminTerminalReports() {
     <>
       <Navbar />
 
-      <motion.div
-        className="reports-page"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      >
-        <h1 className="reports-title">Terminal-wise Reports</h1>
+      <motion.div style={styles.container} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        
+        {/* TITLE */}
+        <h1 style={styles.title}>🖥 Terminal-wise Reports</h1>
 
-        {/* 🔥 SHOW YEAR ONLY */}
-        <h3 style={{ marginBottom: "10px", color: "#555" }}>
-          Year: {activeYear || "Loading..."}
-        </h3>
+        {/* YEAR */}
+        <p style={styles.year}>Active Year: <b>{activeYear || "Loading..."}</b></p>
 
-        {/* Buttons */}
-        <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
+        {/* ACTION BUTTONS */}
+        <div style={styles.actions}>
           <motion.button
-            whileTap={{ scale: 0.96 }}
+            whileTap={{ scale: 0.95 }}
+            style={styles.primaryBtn}
             onClick={load}
-            className="primary-btn"
           >
             Load Report
           </motion.button>
 
           <motion.button
             whileTap={{ scale: 0.95 }}
-            className="danger-btn"
+            style={styles.dangerBtn}
             onClick={() =>
               downloadFile("/admin/report-terminal/pdf", "TerminalReport.pdf")
             }
@@ -121,34 +121,42 @@ export default function AdminTerminalReports() {
           </motion.button>
         </div>
 
-        {/* Cards */}
-        <div className="reports-cards">
-          <SummaryCard label="Total Terminals" value={rows.length} color="blue" />
-          <SummaryCard label="Total Amount" value={`₹${totalAmount}`} color="green" />
+        {/* SUMMARY */}
+        <div style={styles.cards}>
+          <SummaryCard label="Total Terminals" value={rows.length} />
+          <SummaryCard label="Total Amount" value={`₹${totalAmount}`} />
         </div>
 
-        {/* Table */}
-        <div className="reports-table">
-          <table>
+        {/* TABLE */}
+        <div style={styles.tableWrapper}>
+          <table style={styles.table}>
             <thead>
               <tr>
-                <th>Terminal ID</th>
-                <th>Total Amount</th>
+                <th style={styles.th}>#</th>
+                <th style={styles.th}>Terminal ID</th>
+                <th style={styles.th}>Terminal Name</th>
+                <th style={styles.th}>Center</th>
+                <th style={styles.th}>Records</th>
+                <th style={styles.th}>Amount</th>
               </tr>
             </thead>
 
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan="2" className="empty">
+                  <td colSpan="6" style={styles.empty}>
                     No data found
                   </td>
                 </tr>
               ) : (
                 rows.map((r, i) => (
-                  <tr key={i}>
-                    <td>{r.Terminal_ID || r.terminal_ID}</td>
-                    <td>₹{r.totalAmount}</td>
+                  <tr key={i} style={styles.tr}>
+                    <td>{i + 1}</td>
+                    <td>{r.terminalId}</td>
+                    <td>{r.terminalName}</td>
+                    <td>{r.centerName}</td>
+                    <td>{r.totalRecords}</td>
+                    <td style={styles.amount}>₹{r.totalAmount}</td>
                   </tr>
                 ))
               )}
@@ -160,11 +168,103 @@ export default function AdminTerminalReports() {
   );
 }
 
-function SummaryCard({ label, value, color }) {
+// ================= CARD =================
+function SummaryCard({ label, value }) {
   return (
-    <motion.div className={`summary-card ${color}`} whileHover={{ scale: 1.04 }}>
+    <motion.div style={styles.card} whileHover={{ scale: 1.05 }}>
       <p>{label}</p>
       <h2>{value}</h2>
     </motion.div>
   );
 }
+
+// ================= STYLES =================
+const styles = {
+  container: {
+    padding: "25px",
+    background: "#f3f4f6",
+    minHeight: "100vh"
+  },
+
+  title: {
+    fontSize: "28px",
+    fontWeight: "700",
+    marginBottom: "5px"
+  },
+
+  year: {
+    marginBottom: "15px",
+    color: "#555"
+  },
+
+  actions: {
+    display: "flex",
+    gap: "10px",
+    marginBottom: "20px"
+  },
+
+  primaryBtn: {
+    background: "#2563eb",
+    color: "white",
+    padding: "10px 15px",
+    borderRadius: "8px",
+    border: "none",
+    cursor: "pointer"
+  },
+
+  dangerBtn: {
+    background: "#dc2626",
+    color: "white",
+    padding: "10px 15px",
+    borderRadius: "8px",
+    border: "none",
+    cursor: "pointer"
+  },
+
+  cards: {
+    display: "flex",
+    gap: "15px",
+    marginBottom: "20px"
+  },
+
+  card: {
+    background: "linear-gradient(135deg,#4f46e5,#06b6d4)",
+    color: "white",
+    padding: "20px",
+    borderRadius: "12px",
+    minWidth: "180px"
+  },
+
+  tableWrapper: {
+    background: "white",
+    borderRadius: "12px",
+    overflow: "hidden",
+    boxShadow: "0 5px 15px rgba(0,0,0,0.08)"
+  },
+
+  table: {
+    width: "100%",
+    borderCollapse: "collapse"
+  },
+
+  th: {
+    background: "#111827",
+    color: "white",
+    padding: "12px",
+    textAlign: "left"
+  },
+
+  tr: {
+    borderBottom: "1px solid #eee"
+  },
+
+  amount: {
+    fontWeight: "bold",
+    color: "green"
+  },
+
+  empty: {
+    textAlign: "center",
+    padding: "20px"
+  }
+};

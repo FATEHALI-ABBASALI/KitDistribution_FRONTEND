@@ -10,7 +10,41 @@ export default function Center() {
   const [name, setName] = useState("");
   const [city, setCity] = useState("");
   const [search, setSearch] = useState("");
+/* ================= VALIDATION ================= */
 
+const nameRegex = /^[A-Za-z ]+$/;
+
+const validateCenter = (name, city) => {
+
+  const cleanName = name?.trim();
+  const cleanCity = city?.trim();
+
+  if (!cleanName) {
+    return "Center Name is required";
+  }
+
+  if (!nameRegex.test(cleanName)) {
+    return "Center Name must contain only alphabets";
+  }
+
+  if (cleanName.length < 3) {
+    return "Center Name must be at least 3 characters";
+  }
+
+  if (!cleanCity) {
+    return "City is required";
+  }
+
+  if (!nameRegex.test(cleanCity)) {
+    return "City must contain only alphabets";
+  }
+
+  if (cleanCity.length < 3) {
+    return "City must be at least 3 characters";
+  }
+
+  return null;
+};
   useEffect(() => {
     loadCenters();
   }, []);
@@ -38,11 +72,18 @@ export default function Center() {
 
   // ================= ADD =================
   const addCenter = async () => {
-    if (!name || !city) return alert("Fill all fields");
+    const error = validateCenter(name, city);
+
+if (error) {
+  alert(error);
+  return;
+}
 
     try {
-      await apiRequest("/api/centers", "POST", { name, city });
-
+await apiRequest("/api/centers", "POST", {
+  Name: name,
+  City: city
+});
       showNotification("Center added ✅");
 
       setName("");
@@ -64,8 +105,8 @@ export default function Center() {
 
       loadCenters();
     } catch (err) {
-      alert("Delete failed");
-    }
+  alert(err.message || "Delete failed");
+}
   };
 
   // ================= EDIT =================
@@ -73,20 +114,25 @@ export default function Center() {
     const newName = prompt("Enter new name", c.name);
     const newCity = prompt("Enter new city", c.city);
 
-    if (!newName || !newCity) return;
+const error = validateCenter(newName, newCity);
 
+if (error) {
+  alert(error);
+  return;
+}
     try {
       await apiRequest(`/api/centers/${c.id}`, "PUT", {
-        name: newName,
-        city: newCity
+        Name: newName,
+        City: newCity
       });
 
       showNotification("Center updated ✏️");
 
       loadCenters();
     } catch (err) {
-      alert("Update failed");
-    }
+  console.error(err);
+  alert(err.message || "Update failed");
+}
   };
 
   // ================= FILTER =================
