@@ -8,7 +8,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 🔥 MOBILE BLOCK
+  // 🔥 MOBILE CHECK
   const [isMobile, setIsMobile] = useState(false);
   const [tapCount, setTapCount] = useState(0);
   const [allowMobileAdmin, setAllowMobileAdmin] = useState(false);
@@ -49,9 +49,13 @@ function Login() {
       return;
     }
 
-    // 🔥 BLOCK ADMIN ON MOBILE
-    if (username.toLowerCase() === "admin" && isMobile && !allowMobileAdmin) {
-      alert("Admin login only allowed on Desktop 💻");
+    // 🔥 ONLY ADMIN BLOCK ON MOBILE
+    if (
+      username.toLowerCase() === "admin" &&
+      isMobile &&
+      !allowMobileAdmin
+    ) {
+      alert("Admin login only allowed on Desktop 💻 (Tap logo 10 times to unlock)");
       return;
     }
 
@@ -61,22 +65,31 @@ function Login() {
       let res;
 
       if (username === "manager") {
-        res = await apiRequest("/api/manager/login", "POST", { username, password });
+        res = await apiRequest("/api/manager/login", "POST", {
+          username,
+          password,
+        });
       } else {
-        res = await apiRequest("/api/auth/login", "POST", { username, password });
+        res = await apiRequest("/api/auth/login", "POST", {
+          username,
+          password,
+        });
       }
 
       if (!res) throw new Error("Invalid response");
 
-      localStorage.setItem("role", res.role || (username === "manager" ? "Manager" : ""));
+      const role =
+        res.role || (username === "manager" ? "Manager" : "");
+
+      localStorage.setItem("role", role);
       localStorage.setItem("token", res.token || "manager-token");
 
+      // 🔥 REDIRECT
       setTimeout(() => {
-        if (res.role === "Admin") window.location.replace("/admin");
-        else if (res.role === "Terminal") window.location.replace("/terminal");
-        else if (res.role === "Beneficiary") window.location.replace("/beneficiary");
-        else if (res.role === "Manager" || username === "manager")
-          window.location.replace("/manager");
+        if (role === "Admin") window.location.replace("/admin");
+        else if (role === "Terminal") window.location.replace("/terminal");
+        else if (role === "Beneficiary") window.location.replace("/beneficiary");
+        else if (role === "Manager") window.location.replace("/manager");
         else {
           alert("Unknown role");
           localStorage.clear();
@@ -93,57 +106,47 @@ function Login() {
 
   return (
     <div style={styles.bg}>
-      
-      {/* 🔥 MOBILE BLOCK SCREEN */}
-      {isMobile && !allowMobileAdmin ? (
-        <div style={styles.mobileBlock}>
-          <h2>🚫 Desktop Only</h2>
-          <p>Admin panel not allowed on mobile</p>
+      <motion.div
+        style={styles.card}
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        {/* 🔥 SECRET TAP ON LOGO */}
+        <img
+          src={logo}
+          alt="logo"
+          style={styles.logo}
+          onClick={handleSecretTap}
+        />
 
-          {/* 🔥 SECRET TAP AREA */}
-          <div onClick={handleSecretTap} style={styles.secret}></div>
-        </div>
-      ) : (
-        <motion.div
-          style={styles.card}
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
+        <h2 style={styles.title}>Kit Distribution System</h2>
+        <p style={styles.subtitle}>Secure Login Portal</p>
+
+        <input
+          style={styles.input}
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
+
+        <input
+          type="password"
+          style={styles.input}
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.03 }}
+          style={styles.button}
+          onClick={login}
+          disabled={loading}
         >
-          {/* LOGO */}
-          <img src={logo} alt="logo" style={styles.logo} />
-
-          {/* TITLE */}
-          <h2 style={styles.title}>Kit Distribution System</h2>
-          <p style={styles.subtitle}>Secure Login Portal</p>
-
-          {/* INPUTS */}
-          <input
-            style={styles.input}
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-
-          <input
-            type="password"
-            style={styles.input}
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-
-          {/* BUTTON */}
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ scale: 1.03 }}
-            style={styles.button}
-            onClick={login}
-            disabled={loading}
-          >
-            {loading ? "Logging in..." : "Login"}
-          </motion.button>
-        </motion.div>
-      )}
+          {loading ? "Logging in..." : "Login"}
+        </motion.button>
+      </motion.div>
     </div>
   );
 }
@@ -157,7 +160,7 @@ const styles = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    background: "linear-gradient(135deg,#1e3a8a,#06b6d4)"
+    background: "linear-gradient(135deg,#1e3a8a,#06b6d4)",
   },
 
   card: {
@@ -166,22 +169,23 @@ const styles = {
     borderRadius: "16px",
     width: "320px",
     textAlign: "center",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.2)"
+    boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
   },
 
   logo: {
     width: "70px",
-    marginBottom: "10px"
+    marginBottom: "10px",
+    cursor: "pointer",
   },
 
   title: {
-    marginBottom: "5px"
+    marginBottom: "5px",
   },
 
   subtitle: {
     fontSize: "13px",
     color: "#666",
-    marginBottom: "20px"
+    marginBottom: "20px",
   },
 
   input: {
@@ -189,7 +193,7 @@ const styles = {
     padding: "10px",
     marginBottom: "12px",
     borderRadius: "8px",
-    border: "1px solid #ccc"
+    border: "1px solid #ccc",
   },
 
   button: {
@@ -199,18 +203,6 @@ const styles = {
     border: "none",
     background: "#2563eb",
     color: "white",
-    cursor: "pointer"
+    cursor: "pointer",
   },
-
-  mobileBlock: {
-    textAlign: "center",
-    color: "white"
-  },
-
-  secret: {
-    marginTop: "20px",
-    height: "40px",
-    width: "40px",
-    background: "transparent"
-  }
 };
